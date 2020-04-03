@@ -14,7 +14,7 @@ namespace tut3.Controllers
         [HttpPost]
         public IActionResult AddStudent(Student student)
         {
-            return Ok(student);
+            return Ok();
         }
     }
 }
