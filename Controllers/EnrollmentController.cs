@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using tut3.DAL;
 using tut3.DTOs.Requests;
+using tut3.DTOs.Responces;
 using tut3.Models;
 
 namespace tut3.Controllers
@@ -24,6 +25,7 @@ namespace tut3.Controllers
         [HttpPost]
         public IActionResult EnrollStudent(EnrollStudentRequest request)
         {
+            var response = new EnrollStudentResponce();
             using (var con = new SqlConnection("Data Source=db-mssql;Initial Catalog=s18963;Integrated Security=True"))
             {
                 using (var com = new SqlCommand())
@@ -68,9 +70,39 @@ namespace tut3.Controllers
 
                     dr.Close();
 
+                    com.CommandText = "Select * From Student Where IndexNumber=@IndexNumber";
+                    com.Parameters.AddWithValue("IndexNumber", request.IndexNumber);
+                    dr = com.ExecuteReader();
+                    
+                    if (dr.Read())
+                    {
+                        dr.Close();
+                        trans.Rollback();
+                        return BadRequest("You can't add student with the same index number");
+                    }
+                    else
+                    {
+                        dr.Close();
+                        com.CommandText = "Insert Into Student(IndexNumber, FirstName, LastName, Birthdate, IdEnrollment) Value (@IndexNumber, @FirstName, @LastName, @BirthDate, @IdEnrollment)";
+                        com.Parameters.AddWithValue("FirstName", request.FirstName);
+                        com.Parameters.AddWithValue("LastName", request.LastName);
+                        com.Parameters.AddWithValue("BirthDate", request.BirthDate);
+                        com.Parameters.AddWithValue("IdEnrollment", IdEnrollment);
+                        com.ExecuteNonQuery();
+                        dr.Close();
+
+                        response.FirstName = request.FirstName;
+                        response.LastName = request.LastName;
+                        response.BirthDate = request.LastName;
+                        response.Studies = request.Studies;
+                        response.Semester = 1;
+                    }
+
+                    trans.Commit();
                 }
             }
-            return Ok();
+            
+            return Ok(response);
         }
     }
 }
