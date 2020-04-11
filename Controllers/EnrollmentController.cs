@@ -46,6 +46,28 @@ namespace tut3.Controllers
 
                     int idStudy = (int)dr["IdStudy"];
 
+                    dr.Close();
+
+                    com.CommandText = "Select * From Enrollment Where Semester = 1 And IdStudy = @idStudy";
+                    int IdEnrollment = (int)dr["IdEnrollemnt"] + 1;
+                    com.Parameters.AddWithValue("IdStudy", idStudy);
+                    dr = com.ExecuteReader();
+                    
+                    if(dr.Read())
+                    {
+                        dr.Close();
+                        com.CommandText = "Select MAX(idEnrollment) as 'idEnrollment' From Enrollment";
+                        dr = com.ExecuteReader();
+                        dr.Close();
+                        DateTime StartDate = DateTime.Now;
+                        com.CommandText = "Insert Into Enrollment(IdEnrollment, Semester, IdStudy, StartDate) Values (@IdEnrollemnt, 1, @IdStudy, @StartDate)";
+                        com.Parameters.AddWithValue("IdEnrollemnt", IdEnrollment);
+                        com.Parameters.AddWithValue("StartDate", StartDate);
+                        com.ExecuteNonQuery();
+                    }
+
+                    dr.Close();
+
                 }
             }
             return Ok();
