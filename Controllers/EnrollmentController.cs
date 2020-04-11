@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Data.SqlClient;
 using System.Linq;
+using System.Net;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using tut3.DAL;
@@ -22,7 +23,7 @@ namespace tut3.Controllers
             _dbService = dbService;
         }
 
-        [HttpPost]
+        [HttpPost(Name ="EnrollStudent")]
         public IActionResult EnrollStudent(EnrollStudentRequest request)
         {
             var response = new EnrollStudentResponce();
@@ -74,13 +75,7 @@ namespace tut3.Controllers
                     com.Parameters.AddWithValue("IndexNumber", request.IndexNumber);
                     dr = com.ExecuteReader();
                     
-                    if (dr.Read())
-                    {
-                        dr.Close();
-                        trans.Rollback();
-                        return BadRequest("You can't add student with the same index number");
-                    }
-                    else
+                    if (!dr.Read())
                     {
                         dr.Close();
                         com.CommandText = "Insert Into Student(IndexNumber, FirstName, LastName, Birthdate, IdEnrollment) Value (@IndexNumber, @FirstName, @LastName, @BirthDate, @IdEnrollment)";
@@ -91,18 +86,21 @@ namespace tut3.Controllers
                         com.ExecuteNonQuery();
                         dr.Close();
 
-                        response.FirstName = request.FirstName;
-                        response.LastName = request.LastName;
-                        response.BirthDate = request.LastName;
-                        response.Studies = request.Studies;
                         response.Semester = 1;
+                        
+                    }
+                    else
+                    {
+                        dr.Close();
+                        trans.Rollback();
+                        return BadRequest("You can't add student with the same index number");
                     }
 
                     trans.Commit();
                 }
             }
             
-            return Ok(response);
+            return Created("EnrollStudent", response);
         }
     }
 }
